@@ -1,0 +1,33 @@
+-- Create employees table
+CREATE TABLE employees (
+    ID VARCHAR(255) PRIMARY KEY,
+    name MEDIUMTEXT
+);
+
+-- Create projects table
+CREATE TABLE projects (
+    ID INT PRIMARY KEY,
+    name MEDIUMTEXT
+);
+
+-- Create tasks table
+CREATE TABLE tasks (
+    ID INT PRIMARY KEY,
+    name MEDIUMTEXT
+);
+
+-- Create registrations table
+CREATE TABLE registrations (
+    ID INT PRIMARY KEY,
+    taskID INT,
+    projectID INT,
+    employeeID VARCHAR(255),
+    monthAndYear VARCHAR(255), -- Now a string
+    month VARCHAR(255),       -- Now a string
+    totalHoursAsNumber DOUBLE,
+    employeeCost DOUBLE,
+    generalCost DOUBLE,
+    FOREIGN KEY (taskID) REFERENCES tasks(ID),
+    FOREIGN KEY (projectID) REFERENCES projects(ID),
+    FOREIGN KEY (employeeID) REFERENCES employees(ID)
+);
