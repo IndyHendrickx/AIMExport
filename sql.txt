@@ -27,6 +27,8 @@ CREATE TABLE registrations (
     totalHoursAsNumber DOUBLE,
     employeeCost DOUBLE,
     generalCost DOUBLE,
+    overwriteTimeCardProject VARCHAR(255),
+    overwriteTimeCardTask VARCHAR(255),
     FOREIGN KEY (taskID) REFERENCES tasks(ID),
     FOREIGN KEY (projectID) REFERENCES projects(ID),
     FOREIGN KEY (employeeID) REFERENCES employees(ID)
