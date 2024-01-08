@@ -1,12 +1,15 @@
 <?php
 
 // Debugging
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
-// error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // Import XLSX maker
 require 'vendor/autoload.php';
+
+// No timeouts!!!
+ini_set('max_execution_time', 0);
 
 // Creating the connection by specifying the connection details
 $db = mysqli_connect("localhost", "root", "root", "export");
@@ -52,7 +55,9 @@ $tables = array(
         month,
         @totalHoursAsNumber_str,
         @employeeCost_str,
-        @generalCost_str
+        @generalCost_str,
+        overwriteProject,
+        overwriteTask
     ) SET 
         ID = CAST(@ID_str AS UNSIGNED INTEGER), 
         taskID = CAST(@taskID_str AS UNSIGNED INTEGER), 
@@ -68,29 +73,62 @@ SetFKAndUniqueCheck(1, $db);
 // Get records for export
 $registrations = $db->query(
     "SELECT 
-        p.name AS Project,
-        e.name AS Employee,
-        t.name AS Task,
-        r.monthAndYear AS Date,
-        r.month AS Month,
-        SUM(r.totalHoursAsNumber) AS SumHours,
-        SUM(r.employeeCost + r.generalCost) AS SumCost
-    FROM
-        registrations r
-    JOIN 
-        projects p ON r.projectID = p.ID
-    JOIN 
-        employees e ON r.employeeID = e.ID
-    JOIN 
-        tasks t ON r.taskID = t.ID
-    GROUP BY 
-        p.name,
-        e.name, 
-        t.name,
-        r.monthAndYear,
-        r.month
-    ORDER BY 
-        p.name, e.name, t.name, r.monthAndYear, r.month
+    COALESCE(
+        CASE WHEN r.overwriteProject IS NOT NULL AND TRIM(r.overwriteProject) <> '' THEN r.overwriteProject ELSE NULL END,
+        p.name
+    ) AS Project,
+    
+    e.name AS Employee,
+    
+    COALESCE(
+        CASE WHEN r.overwriteTask IS NOT NULL AND TRIM(r.overwriteTask) <> '' THEN r.overwriteTask ELSE NULL END,
+        t.name
+    ) AS Task,
+    
+    r.monthAndYear AS Date,
+    r.month AS Month,
+    
+    SUM(r.totalHoursAsNumber) AS SumHours,
+    SUM(r.employeeCost + r.generalCost) AS SumCost
+    
+FROM
+    registrations r
+JOIN 
+    projects p ON r.projectID = p.ID
+JOIN 
+    employees e ON r.employeeID = e.ID
+JOIN 
+    tasks t ON r.taskID = t.ID
+    
+GROUP BY 
+    COALESCE(
+        CASE WHEN r.overwriteProject IS NOT NULL AND TRIM(r.overwriteProject) <> '' THEN r.overwriteProject ELSE NULL END,
+        p.name
+    ),
+    
+    e.name, 
+    
+    COALESCE(
+        CASE WHEN r.overwriteTask IS NOT NULL AND TRIM(r.overwriteTask) <> '' THEN r.overwriteTask ELSE NULL END,
+        t.name
+    ),
+    
+    r.monthAndYear,
+    r.month
+    
+ORDER BY 
+    COALESCE(
+        CASE WHEN r.overwriteProject IS NOT NULL AND TRIM(r.overwriteProject) <> '' THEN r.overwriteProject ELSE NULL END,
+        p.name
+    ), 
+    e.name, 
+    COALESCE(
+        CASE WHEN r.overwriteTask IS NOT NULL AND TRIM(r.overwriteTask) <> '' THEN r.overwriteTask ELSE NULL END,
+        t.name
+    ),
+    r.monthAndYear, 
+    r.month
+
     "
 );
 
